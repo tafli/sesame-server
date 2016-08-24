@@ -2,12 +2,14 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+GET         /                               controllers.Application.index
+
 # API entry point
-GET         /api                            @controllers.Application.index
+GET         /api                            controllers.Application.apiIndex
 
 # Bricklets
-GET         /api/bricklets                  @controllers.Bricklets.getBricklets
+GET         /api/bricklets                  controllers.Bricklets.getBricklets
 
 # Doors
-GET         /api/doors                      @controllers.Doors.getDoors
-POST        /api/doors/:id/open             @controllers.Doors.openDoor(id: String)
+GET         /api/doors                      controllers.Doors.getDoors
+POST        /api/doors/:id/open             controllers.Doors.openDoor(id: String)
