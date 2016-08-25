@@ -1,5 +1,6 @@
 package controllers
 
+import models.MasterBrick
 import play.api.mvc.{Action, Controller}
 
 /**
@@ -7,6 +8,11 @@ import play.api.mvc.{Action, Controller}
   */
 class Bricklets extends Controller {
   def getBricklets = Action { implicit request =>
-    Ok("Response")
+
+    val result = MasterBrick.fetchInformation("123")
+
+    println(s"f=$result")
+
+    Ok
   }
 }

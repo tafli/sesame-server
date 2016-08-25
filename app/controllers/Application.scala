@@ -1,7 +1,5 @@
 package controllers
 
-import java.lang.ProcessBuilder.Redirect
-
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
 
@@ -9,6 +7,7 @@ import play.api.mvc.{Action, Controller}
   * Created by Andreas Boss on 23.08.16.
   */
 class Application extends Controller {
+
   /**
     * Redirects to the api index
     * @return
