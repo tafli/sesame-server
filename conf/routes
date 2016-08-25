@@ -9,6 +9,7 @@ GET         /api                            controllers.Application.apiIndex
 
 # Bricklets
 GET         /api/bricklets                  controllers.Bricklets.getBricklets
+GET         /api/bricklets/:uid             controllers.Bricklets.getBricklet(uid: String)
 
 # Doors
 GET         /api/doors                      controllers.Doors.getDoors
