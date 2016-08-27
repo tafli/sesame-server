@@ -9,13 +9,20 @@ import play.api.mvc.{Action, Controller}
   */
 class Bricklets extends Controller {
   def getBricklets = Action {
-    val result = MasterBrick.fetchInformation("123")
+    val result = MasterBrick.fetchInformation("6rnffo")
 
-    Ok(Json.obj("bricklets" -> result))
+    Ok(Json.obj("apiVersion" -> result.api,
+      "stackVoltage" -> result.voltage,
+      "stackTemperatur" -> result.temp)
+    )
   }
+
   def getBricklet(uid: String) = Action {
     val result = MasterBrick.fetchInformation(uid)
 
-    Ok(Json.obj("bricklets" -> result))
+    Ok(Json.obj("apiVersion" -> result.api,
+      "stackVoltage" -> result.voltage,
+      "stackTemperatur" -> result.temp)
+    )
   }
 }

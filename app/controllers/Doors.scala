@@ -1,5 +1,6 @@
 package controllers
 
+import models.DualRelayBricklet
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
 
@@ -14,8 +15,17 @@ class Doors extends Controller {
     Ok(doorsJson)
   }
 
-
-  def openDoor(id: String) = Action { implicit request =>
+  def openFirst(uid: String) = Action {
+    open(uid, 1)
     Ok
+  }
+
+  def openSelective(uid: String, relay: Int) = Action {
+    open(uid, relay)
+    Ok
+  }
+
+  def open(uid: String, relay: Int) = {
+    DualRelayBricklet.setState(uid, relay.toShort)
   }
 }
