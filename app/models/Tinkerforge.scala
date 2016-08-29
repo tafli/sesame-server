@@ -1,44 +1,65 @@
 package models
 
-import actors.{DualRelayActor, MasterBrickActor, RootActor}
+import javax.inject.Singleton
+
+import actors.{DualRelayActor, EnumerationActor, MasterBrickActor, RootActor}
 import akka.actor.Props
 import com.tinkerforge.IPConnection.EnumerateListener
-import com.tinkerforge.{BrickMaster, IPConnection, IPConnectionBase}
+import com.tinkerforge.{BrickMaster, IPConnection}
+import play.api.libs.json.Json
 import utils.Configuration
 
 import scala.concurrent.Future
 
+@Singleton
 object TFConnector {
-  lazy val ipcon = new IPConnection(); // Create IP connection
-
+  val ipcon = new IPConnection
   ipcon.connect(Configuration.tfHost, Configuration.tfPort)
 
-  ipcon.addEnumerateListener(
-    new EnumerateListener {
-      override def enumerate(uid: String, connectedUid: String, position: Char, hardwareVersion: Array[Short], firmwareVersion: Array[Short], deviceIdentifier: Int, enumerationType: Short): Unit = {
-        println("UID:               " + uid)
-        println("Enumeration Type:  " + enumerationType)
-
-        if(enumerationType == IPConnectionBase.ENUMERATION_TYPE_DISCONNECTED) {
-          println("")
-          return
-        }
-      }
+  ipcon.addEnumerateListener(new EnumerateListener {
+    override def enumerate(uid: String, connectedUid: String, position: Char, hardwareVersion: Array[Short], firmwareVersion: Array[Short], deviceIdentifier: Int, enumerationType: Short): Unit = {
+      val bricklet = Bricklet(uid, connectedUid, position, hardwareVersion, firmwareVersion, deviceIdentifier, enumerationType)
+      EnumerationActor.actor ! EnumerationActor.Enumerate(bricklet)
     }
+  })
+}
+
+case class Bricklet(
+                     uid: String,
+                     connectedUid: String,
+                     position: Char,
+                     hardwareVersion: Array[Short],
+                     firmwareVersion: Array[Short],
+                     deviceIdentifier: Integer,
+                     enumerationType: Short
+                   ) {
+  def toJson = Json.obj(
+    "uid" -> uid,
+    "connected_uid" -> connectedUid,
+    "position" -> position.toString,
+    "hardware-version" -> s"${hardwareVersion(0)}.${hardwareVersion(1)}.${hardwareVersion(2)}",
+    "firmware-version" -> s"${firmwareVersion(0)}.${firmwareVersion(1)}.${firmwareVersion(2)}",
+    "device_identifier" -> deviceIdentifier.toString,
+    "enumeration_type" -> enumerationType
   )
-  ipcon.enumerate()
+
+  // Overwrite equals to only check UID
+  override def equals(o: scala.Any): Boolean = o match {
+    case other: Bricklet => uid == other.uid
+    case _ => false
+  }
 }
 
 /**
   * Created by Andreas Boss on 23.08.16.
   */
 object MasterBrick {
+
   import RootActor.system.dispatcher
 
   def fetchInformation(uid: String): Future[MasterBrickActor.BrickData] = Future {
-    TFConnector.ipcon.enumerate
-
-    val master = new BrickMaster(uid, TFConnector.ipcon); // Create device object
+    val master = new BrickMaster(uid, TFConnector.ipcon);
+    // Create device object
     val apiVersion = s"${master.getAPIVersion()(0)}.${master.getAPIVersion()(1)}.${master.getAPIVersion()(2)}"
 
     MasterBrickActor.BrickData(apiVersion, master.getStackVoltage, master.getChipTemperature / 10)
