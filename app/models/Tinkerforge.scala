@@ -2,19 +2,15 @@ package models
 
 import actors.{DualRelayActor, MasterBrickActor, RootActor}
 import akka.actor.Props
-import akka.pattern.ask
-import akka.util.Timeout
-import com.tinkerforge.{IPConnection, IPConnectionBase}
 import com.tinkerforge.IPConnection.EnumerateListener
+import com.tinkerforge.{BrickMaster, IPConnection, IPConnectionBase}
 import utils.Configuration
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.Future
 
 object TFConnector {
   lazy val ipcon = new IPConnection(); // Create IP connection
 
-  println("Connecting...")
   ipcon.connect(Configuration.tfHost, Configuration.tfPort)
 
   ipcon.addEnumerateListener(
@@ -27,13 +23,6 @@ object TFConnector {
           println("")
           return
         }
-
-        println(s"Connected UID:     $connectedUid")
-        println(s"Position:          $position")
-        println(s"Hardware Version:  $hardwareVersion(0).$hardwareVersion(1).$hardwareVersion(2)")
-        println(s"Firmware Version:  $firmwareVersion(0).$firmwareVersion(1).$firmwareVersion(2)")
-        println(s"Device Identifier: $deviceIdentifier")
-        println("")
       }
     }
   )
@@ -41,18 +30,18 @@ object TFConnector {
 }
 
 /**
-  * Created by boss on 23.08.16.
+  * Created by Andreas Boss on 23.08.16.
   */
 object MasterBrick {
-  val masterBrickActor = RootActor.system.actorOf(Props[MasterBrickActor])
+  import RootActor.system.dispatcher
 
-  def fetchInformation(uid: String): MasterBrickActor.BrickData = {
-    implicit val timeout = Timeout(5 seconds)
-    val future = (masterBrickActor ? MasterBrickActor.BrickUid(uid)).mapTo[MasterBrickActor.BrickData]
-    val data = Await.result(future, 5 second)
-    println(s"Result: $data")
+  def fetchInformation(uid: String): Future[MasterBrickActor.BrickData] = Future {
+    TFConnector.ipcon.enumerate
 
-    data
+    val master = new BrickMaster(uid, TFConnector.ipcon); // Create device object
+    val apiVersion = s"${master.getAPIVersion()(0)}.${master.getAPIVersion()(1)}.${master.getAPIVersion()(2)}"
+
+    MasterBrickActor.BrickData(apiVersion, master.getStackVoltage, master.getChipTemperature / 10)
   }
 }
 
