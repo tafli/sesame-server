@@ -4,7 +4,9 @@ import actors.{DualRelayActor, MasterBrickActor, RootActor}
 import akka.actor.Props
 import akka.pattern.ask
 import akka.util.Timeout
-import com.tinkerforge.IPConnection
+import com.tinkerforge.{IPConnection, IPConnectionBase}
+import com.tinkerforge.IPConnection.EnumerateListener
+import utils.Configuration
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -13,7 +15,29 @@ object TFConnector {
   lazy val ipcon = new IPConnection(); // Create IP connection
 
   println("Connecting...")
-  ipcon.connect("localhost", 4223);
+  ipcon.connect(Configuration.tfHost, Configuration.tfPort)
+
+  ipcon.addEnumerateListener(
+    new EnumerateListener {
+      override def enumerate(uid: String, connectedUid: String, position: Char, hardwareVersion: Array[Short], firmwareVersion: Array[Short], deviceIdentifier: Int, enumerationType: Short): Unit = {
+        println("UID:               " + uid)
+        println("Enumeration Type:  " + enumerationType)
+
+        if(enumerationType == IPConnectionBase.ENUMERATION_TYPE_DISCONNECTED) {
+          println("")
+          return
+        }
+
+        println(s"Connected UID:     $connectedUid")
+        println(s"Position:          $position")
+        println(s"Hardware Version:  $hardwareVersion(0).$hardwareVersion(1).$hardwareVersion(2)")
+        println(s"Firmware Version:  $firmwareVersion(0).$firmwareVersion(1).$firmwareVersion(2)")
+        println(s"Device Identifier: $deviceIdentifier")
+        println("")
+      }
+    }
+  )
+  ipcon.enumerate()
 }
 
 /**
