@@ -1,17 +1,17 @@
 package models
 
-import javax.inject.Singleton
+import javax.inject.{Inject, Singleton}
 
 import actors.{DualRelayActor, EnumerationActor, MasterBrickActor, RootActor}
 import akka.actor.Props
 import com.tinkerforge.IPConnection.EnumerateListener
 import com.tinkerforge.{BrickMaster, IPConnection}
+import play.api.inject.ApplicationLifecycle
 import play.api.libs.json.Json
 import utils.Configuration
 
 import scala.concurrent.Future
 
-@Singleton
 object TFConnector {
   val ipcon = new IPConnection
   ipcon.connect(Configuration.tfHost, Configuration.tfPort)
@@ -22,6 +22,18 @@ object TFConnector {
       EnumerationActor.actor ! EnumerationActor.Enumerate(bricklet)
     }
   })
+}
+
+@Singleton
+class TFConnector @Inject()(appLifecycle: ApplicationLifecycle) {
+  println("Starting up...")
+
+  EnumerationActor.actor ! EnumerationActor.Tick
+
+  appLifecycle.addStopHook { () =>
+    print("Stopping application")
+    Future.successful(())
+  }
 }
 
 case class Bricklet(
