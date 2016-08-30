@@ -1,7 +1,5 @@
 package actors
 
-import javax.inject.Singleton
-
 import actors.EnumerationActor.{Enumerate, GetBricklets, Tick}
 import akka.actor.{Actor, Props}
 import akka.pattern.ask
@@ -13,7 +11,6 @@ import scala.concurrent.duration._
 /**
   * Created by Andreas Boss on 29.08.16.
   */
-@Singleton
 object EnumerationActor {
   val actor = RootActor.system.actorOf(Props[EnumerationActor])
 
@@ -38,8 +35,10 @@ class EnumerationActor extends Actor {
   var brickletList: Set[Bricklet] = Set()
 
   def receive: Receive = {
-    case Tick => {TFConnector.ipcon.enumerate()
-      println("Tick")
+    case Tick => {
+      import context.dispatcher
+      context.system.scheduler.scheduleOnce(10000 millis, self, Tick)
+      TFConnector.ipcon.enumerate()
     }
     case Enumerate(bricklet) => {
       brickletList = brickletList + bricklet

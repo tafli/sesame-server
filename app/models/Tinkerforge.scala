@@ -17,41 +17,52 @@ object TFConnector {
   ipcon.connect(Configuration.tfHost, Configuration.tfPort)
 
   ipcon.addEnumerateListener(new EnumerateListener {
-    override def enumerate(uid: String, connectedUid: String, position: Char, hardwareVersion: Array[Short], firmwareVersion: Array[Short], deviceIdentifier: Int, enumerationType: Short): Unit = {
-      val bricklet = Bricklet(uid, connectedUid, position, hardwareVersion, firmwareVersion, deviceIdentifier, enumerationType)
+    override def enumerate(uid: String,
+                           connectedUid: String,
+                           position: Char,
+                           hardwareVersion: Array[Short],
+                           firmwareVersion: Array[Short],
+                           deviceIdentifier: Int,
+                           enumerationType: Short): Unit = {
+      val bricklet = Bricklet(
+        uid,
+        connectedUid,
+        position,
+        hardwareVersion,
+        firmwareVersion,
+        deviceIdentifier,
+        enumerationType
+      )
       EnumerationActor.actor ! EnumerationActor.Enumerate(bricklet)
     }
   })
 }
 
+/**
+  * This class is initialized at application start and send an enumarate command
+  * to EnumeraterActor to get all connected bricklets.
+  */
 @Singleton
 class TFConnector @Inject()(appLifecycle: ApplicationLifecycle) {
   println("Starting up...")
 
   EnumerationActor.actor ! EnumerationActor.Tick
-
-  appLifecycle.addStopHook { () =>
-    print("Stopping application")
-    Future.successful(())
-  }
 }
 
-case class Bricklet(
-                     uid: String,
-                     connectedUid: String,
-                     position: Char,
-                     hardwareVersion: Array[Short],
-                     firmwareVersion: Array[Short],
-                     deviceIdentifier: Integer,
-                     enumerationType: Short
-                   ) {
+case class Bricklet(uid: String,
+                    connectedUid: String,
+                    position: Char,
+                    hardwareVersion: Array[Short],
+                    firmwareVersion: Array[Short],
+                    deviceIdentifier: Integer,
+                    enumerationType: Short) {
   def toJson = Json.obj(
     "uid" -> uid,
+    "device_identifier" -> deviceIdentifier.toString,
     "connected_uid" -> connectedUid,
     "position" -> position.toString,
     "hardware-version" -> s"${hardwareVersion(0)}.${hardwareVersion(1)}.${hardwareVersion(2)}",
     "firmware-version" -> s"${firmwareVersion(0)}.${firmwareVersion(1)}.${firmwareVersion(2)}",
-    "device_identifier" -> deviceIdentifier.toString,
     "enumeration_type" -> enumerationType
   )
 
@@ -72,14 +83,17 @@ object MasterBrick {
   def fetchInformation(uid: String): Future[MasterBrickActor.BrickData] = Future {
     val master = new BrickMaster(uid, TFConnector.ipcon);
     // Create device object
-    val apiVersion = s"${master.getAPIVersion()(0)}.${master.getAPIVersion()(1)}.${master.getAPIVersion()(2)}"
+    val apiVersion =
+      s"${master.getAPIVersion()(0)}.${master.getAPIVersion()(1)}.${master.getAPIVersion()(2)}"
 
-    MasterBrickActor.BrickData(apiVersion, master.getStackVoltage, master.getChipTemperature / 10)
+    MasterBrickActor
+      .BrickData(apiVersion, master.getStackVoltage, master.getChipTemperature / 10)
   }
 }
 
 object DualRelayBricklet {
   val dualRelayActor = RootActor.system.actorOf(Props[DualRelayActor])
 
-  def setState(uid: String, relay: Short) = dualRelayActor ! DualRelayActor.SetState(uid, relay)
+  def setState(uid: String, relay: Short) =
+    dualRelayActor ! DualRelayActor.SetState(uid, relay)
 }

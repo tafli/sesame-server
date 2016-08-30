@@ -15,3 +15,5 @@ libraryDependencies ++= Seq(
 )
 
 fork in run := true
+
+scalafmtConfig in ThisBuild := Some(file(".scalafmt"))

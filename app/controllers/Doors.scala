@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import models.DualRelayBricklet
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
@@ -7,10 +8,11 @@ import play.api.mvc.{Action, Controller}
 /**
   * Created by Andreas Boss on 23.08.16.
   */
-class Doors extends Controller {
+class Doors @Inject() extends Controller {
   def getDoors = Action { implicit request =>
-    val doorsJson = Json.obj("doors" ->
-      "123"
+    val doorsJson = Json.obj(
+      "doors" ->
+        "123"
     )
     Ok(doorsJson)
   }

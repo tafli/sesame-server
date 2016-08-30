@@ -24,9 +24,12 @@ class MasterBrickActor extends Actor {
 
       val master = new BrickMaster(uid, TFConnector.ipcon); // Create device object
 
-      val apiVersion = s"${master.getAPIVersion()(0)}.${master.getAPIVersion()(1)}.${master.getAPIVersion()(2)}"
+      val apiVersion =
+        s"${master.getAPIVersion()(0)}.${master.getAPIVersion()(1)}.${master
+          .getAPIVersion()(2)}"
 
-      val data = MasterBrickActor.BrickData(apiVersion, master.getStackVoltage, master.getChipTemperature / 10)
+      val data = MasterBrickActor
+        .BrickData(apiVersion, master.getStackVoltage, master.getChipTemperature / 10)
 
       println(s"Sending Back data $data")
 

@@ -24,9 +24,12 @@ class Application extends Controller {
     val json = Json.obj(
       "version" -> "0.1",
       "_links" -> Seq(
-        Json.obj("rel" -> "self", "href" -> routes.Application.index().absoluteURL())
-        , Json.obj("rel" -> "bricklets", "href" -> routes.Bricklets.getBricklets().absoluteURL())
-        , Json.obj("rel" -> "door", "href" -> routes.Doors.getDoors().absoluteURL())
+        Json.obj("rel" -> "self", "href" -> routes.Application.index().absoluteURL()),
+        Json.obj(
+          "rel" -> "bricklets",
+          "href" -> routes.Bricklets.getBricklets().absoluteURL()
+        ),
+        Json.obj("rel" -> "door", "href" -> routes.Doors.getDoors().absoluteURL())
       )
     )
 
