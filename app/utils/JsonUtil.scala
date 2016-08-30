@@ -8,7 +8,6 @@ import play.api.mvc.{Call, RequestHeader}
   */
 trait JsonUtil {
   def addSelfLink(json: JsValue, c: Call)(implicit request: RequestHeader) =
-    Json.obj(
-      "_links" -> Json.obj("rel" -> "self", "href" -> c.absoluteURL())
-    ) ++ json.as[JsObject]
+    Json.obj("_links" -> Json.obj("rel" -> "self", "href" -> c.absoluteURL())) ++ json
+      .as[JsObject]
 }

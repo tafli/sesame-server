@@ -25,6 +25,8 @@ class Bricklets @Inject() extends Controller {
       2 seconds
     )
 
-    Ok(Json.obj("bricklets" -> bricklets.map {b => Json.toJson(b)}))
+    Ok(Json.obj("bricklets" -> bricklets.map { b =>
+      Json.toJson(b)
+    }))
   }
 }
