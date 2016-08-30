@@ -1,5 +1,7 @@
 package controllers
 
+import javax.inject.Singleton
+
 import actors.EnumerationActor
 import akka.pattern.ask
 import akka.util.Timeout
@@ -14,6 +16,7 @@ import scala.concurrent.duration._
 /**
   * Created by Andreas Boss on 23.08.16.
   */
+@Singleton
 class Bricklets @Inject() extends Controller {
   def getBricklets = Action {
     implicit val timeout = Timeout(1 seconds)
@@ -22,8 +25,6 @@ class Bricklets @Inject() extends Controller {
       2 seconds
     )
 
-    bricklets.map(b => b.uid).foreach(println(_))
-
-    Ok(Json.arr(bricklets.map(_.toJson)))
+    Ok(Json.obj("bricklets" -> bricklets.map {b => Json.toJson(b)}))
   }
 }

@@ -4,13 +4,16 @@ import javax.inject.{Inject, Singleton}
 
 import actors.{DualRelayActor, EnumerationActor, MasterBrickActor, RootActor}
 import akka.actor.Props
+import akka.pattern.ask
+import akka.util.Timeout
 import com.tinkerforge.IPConnection.EnumerateListener
 import com.tinkerforge.{BrickMaster, IPConnection}
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.json.Json
 import utils.Configuration
 
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 object TFConnector {
   val ipcon = new IPConnection
@@ -27,7 +30,7 @@ object TFConnector {
       val bricklet = Bricklet(
         uid,
         connectedUid,
-        position,
+        position.toString,
         hardwareVersion,
         firmwareVersion,
         deviceIdentifier,
@@ -44,27 +47,42 @@ object TFConnector {
   */
 @Singleton
 class TFConnector @Inject()(appLifecycle: ApplicationLifecycle) {
-  println("Starting up...")
-
   EnumerationActor.actor ! EnumerationActor.Tick
+}
+
+object Bricklet {
+  implicit val employeeDataReads = Json.reads[Bricklet]
+
+  implicit val employeeDataWrites = Json.writes[Bricklet]
+
+  def getBrickletByIdentifier(identifier: Int): Set[Bricklet] = {
+    implicit val timeout = Timeout(1 seconds)
+    Await
+      .result(
+        (EnumerationActor.actor ? EnumerationActor.GetBricklets).mapTo[Set[Bricklet]],
+        2 seconds
+      )
+      .filter(_.deviceIdentifier == identifier)
+  }
+
+  def getBrickletByUid(uid: String): Option[Bricklet] = {
+    implicit val timeout = Timeout(1 seconds)
+    Await
+      .result(
+        (EnumerationActor.actor ? EnumerationActor.GetBricklets).mapTo[Set[Bricklet]],
+        2 seconds
+      )
+      .find(_.uid == uid)
+  }
 }
 
 case class Bricklet(uid: String,
                     connectedUid: String,
-                    position: Char,
+                    position: String,
                     hardwareVersion: Array[Short],
                     firmwareVersion: Array[Short],
-                    deviceIdentifier: Integer,
+                    deviceIdentifier: Int,
                     enumerationType: Short) {
-  def toJson = Json.obj(
-    "uid" -> uid,
-    "device_identifier" -> deviceIdentifier.toString,
-    "connected_uid" -> connectedUid,
-    "position" -> position.toString,
-    "hardware-version" -> s"${hardwareVersion(0)}.${hardwareVersion(1)}.${hardwareVersion(2)}",
-    "firmware-version" -> s"${firmwareVersion(0)}.${firmwareVersion(1)}.${firmwareVersion(2)}",
-    "enumeration_type" -> enumerationType
-  )
 
   // Overwrite equals to only check UID
   override def equals(o: scala.Any): Boolean = o match {

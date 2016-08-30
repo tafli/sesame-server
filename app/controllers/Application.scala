@@ -1,17 +1,15 @@
 package controllers
 
+import javax.inject.{Inject, Singleton}
+
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
 
 /**
   * Created by Andreas Boss on 23.08.16.
   */
-class Application extends Controller {
-
-  /**
-    * Redirects to the api index
-    * @return
-    */
+@Singleton
+class Application @Inject() extends Controller {
   def index = Action {
     Redirect(routes.Application.apiIndex())
   }
