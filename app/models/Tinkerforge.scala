@@ -3,7 +3,6 @@ package models
 import javax.inject.{Inject, Singleton}
 
 import actors.{DualRelayActor, EnumerationActor, MasterBrickActor, RootActor}
-import akka.actor.Props
 import akka.pattern.ask
 import akka.util.Timeout
 import com.tinkerforge.IPConnection.EnumerateListener
@@ -110,8 +109,6 @@ object MasterBrick {
 }
 
 object DualRelayBricklet {
-  val dualRelayActor = RootActor.system.actorOf(Props[DualRelayActor])
-
   def setState(uid: String, relay: Short) =
-    dualRelayActor ! DualRelayActor.SetState(uid, relay)
+    DualRelayActor.actor ! DualRelayActor.SetState(uid, relay)
 }

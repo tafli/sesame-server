@@ -2,11 +2,17 @@ package controllers
 
 import javax.inject.Singleton
 
+import actors.DualRelayActor
+import akka.pattern.ask
+import akka.util.Timeout
 import com.google.inject.Inject
 import models.{Bricklet, DualRelayBricklet}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
 import utils.JsonUtil
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
   * Created by Andreas Boss on 23.08.16.
@@ -16,8 +22,8 @@ class Doors @Inject() extends Controller with JsonUtil {
   def getDoors = Action { implicit request =>
     val doorsJson = Json.obj(
       "doors" ->
-        Bricklet.getBrickletByIdentifier(26).map { b =>
-          addSelfLink(Json.toJson(b), routes.Doors.getDoor(b.uid))
+        Bricklet.getBrickletByIdentifier(26).map { bricklet =>
+          addSelfLink(Json.toJson(bricklet), routes.Doors.getDoor(bricklet.uid))
         }
     )
 
@@ -34,6 +40,19 @@ class Doors @Inject() extends Controller with JsonUtil {
     Ok(doorsJson)
   }
 
+  def openState(uid: String) = Action {
+    implicit val timeout = Timeout(1 seconds)
+    val state = Await.result(
+      (DualRelayActor.actor ? DualRelayActor.GetState(uid)).mapTo[(Boolean, Boolean)],
+      2 seconds
+    )
+
+    Ok(Json.obj("state" -> Json.obj(
+      "relay_1" -> state._1,
+      "relay_2" -> state._2
+    )))
+  }
+
   def openFirst(uid: String) = Action {
     open(uid, 1)
     Ok
@@ -44,7 +63,7 @@ class Doors @Inject() extends Controller with JsonUtil {
     Ok
   }
 
-  def open(uid: String, relay: Int) = {
+  private def open(uid: String, relay: Int) = {
     DualRelayBricklet.setState(uid, relay.toShort)
   }
 }
