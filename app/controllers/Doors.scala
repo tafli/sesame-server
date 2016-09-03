@@ -40,17 +40,19 @@ class Doors @Inject() extends Controller with JsonUtil {
     Ok(doorsJson)
   }
 
-  def openState(uid: String) = Action {
+  def openState(uid: String) = Action { implicit request =>
     implicit val timeout = Timeout(1 seconds)
     val state = Await.result(
       (DualRelayActor.actor ? DualRelayActor.GetState(uid)).mapTo[(Boolean, Boolean)],
       2 seconds
     )
 
-    Ok(Json.obj("state" -> Json.obj(
+    val json = addSelfLink(Json.obj("state" -> Json.obj(
       "relay_1" -> state._1,
       "relay_2" -> state._2
-    )))
+    )), routes.Doors.openState(uid))
+
+    Ok(json)
   }
 
   def openFirst(uid: String) = Action {
