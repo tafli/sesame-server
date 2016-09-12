@@ -2,7 +2,7 @@ package models
 
 import javax.inject.{Inject, Singleton}
 
-import actors.{DualRelayActor, EnumerationActor, MasterBrickActor, RootActor}
+import actors._
 import akka.pattern.ask
 import akka.util.Timeout
 import com.tinkerforge.IPConnection.EnumerateListener
@@ -38,6 +38,9 @@ object TFConnector {
       EnumerationActor.actor ! EnumerationActor.Enumerate(bricklet)
     }
   })
+
+  // Start reading NFC Tags
+  NFCReaderActor.actor ! NFCReaderActor.ReadTagId(Configuration.nfcUID)
 }
 
 /**
@@ -111,4 +114,8 @@ object MasterBrick {
 object DualRelayBricklet {
   def setState(uid: String, relay: Short) =
     DualRelayActor.actor ! DualRelayActor.SetState(uid, relay)
+}
+
+object NFCReaderBricklet {
+
 }

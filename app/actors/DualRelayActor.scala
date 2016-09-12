@@ -22,7 +22,7 @@ object DualRelayActor {
 class DualRelayActor extends Actor {
   def receive: Receive = {
     case SetState(uid: String, relay: Short) => {
-      new BrickletDualRelay(uid, TFConnector.ipcon).setMonoflop(relay, true, 500)
+      new BrickletDualRelay(uid, TFConnector.ipcon).setMonoflop(relay, true, 1000)
     }
     case GetState(uid: String) => {
       val state = new BrickletDualRelay(uid, TFConnector.ipcon).getState

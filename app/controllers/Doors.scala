@@ -29,6 +29,7 @@ class Doors @Inject() extends Controller with JsonUtil {
 
     Ok(doorsJson)
   }
+
   def getDoor(uid: String) = Action { implicit request =>
     val doorsJson = Json.obj(
       "door" ->
