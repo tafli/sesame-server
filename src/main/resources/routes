@@ -1,0 +1,19 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# https://www.playframework.com/documentation/latest/ScalaRouting
+# ~~~~
+
+GET     /                               controllers.Application.index
+
+# API entry point
+GET     /api                            controllers.Application.apiIndex
+
+# Bricklets
+GET     /api/bricklets                  controllers.Bricklets.getBricklets
+
+# Doors
+GET     /api/doors                      controllers.Doors.getDoors
+GET     /api/doors/:uid                 controllers.Doors.getDoor(uid:String)
+GET     /api/doors/:uid/state           controllers.Doors.openState(uid:String)
+POST    /api/doors/:uid/open            controllers.Doors.openFirst(uid:String)
+POST    /api/doors/:uid/open/:relay     controllers.Doors.openSelective(uid:String, relay:Int)

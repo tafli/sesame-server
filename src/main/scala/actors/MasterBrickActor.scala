@@ -4,10 +4,8 @@ import actors.MasterBrickActor.BrickUid
 import akka.actor.{Actor, Props}
 import com.tinkerforge.BrickMaster
 import models.TFConnector
+import play.Logger
 
-/**
-  * Created by Andreas Boss on 24.08.16.
-  */
 object MasterBrickActor {
   def props: Props = Props(new MasterBrickActor)
 
@@ -22,7 +20,7 @@ class MasterBrickActor extends Actor {
   def receive: Receive = {
     case BrickUid(uid: String) => {
 
-      val master = new BrickMaster(uid, TFConnector.ipcon); // Create device object
+      val master = new BrickMaster(uid, TFConnector.ipcon);
 
       val apiVersion =
         s"${master.getAPIVersion()(0)}.${master.getAPIVersion()(1)}.${master
@@ -31,10 +29,10 @@ class MasterBrickActor extends Actor {
       val data = MasterBrickActor
         .BrickData(apiVersion, master.getStackVoltage, master.getChipTemperature / 10)
 
-      println(s"Sending Back data $data")
+      Logger.debug(s"Sending Back [$data]")
 
       sender ! data
     }
-    case _ => println("Received invalid message!")
+    case _ => Logger.warn("Received invalid message!")
   }
 }

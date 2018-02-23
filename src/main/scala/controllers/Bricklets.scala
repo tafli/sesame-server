@@ -1,23 +1,19 @@
 package controllers
 
-import javax.inject.Singleton
+import javax.inject.{Inject, Singleton}
 
 import actors.EnumerationActor
 import akka.pattern.ask
 import akka.util.Timeout
-import com.google.inject.Inject
 import models.Bricklet
 import play.api.libs.json.Json
-import play.api.mvc.{Action, Controller}
+import play.api.mvc.{AbstractController, ControllerComponents}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-/**
-  * Created by Andreas Boss on 23.08.16.
-  */
 @Singleton
-class Bricklets @Inject() extends Controller {
+class Bricklets @Inject() (cc:ControllerComponents) extends AbstractController(cc) {
   def getBricklets = Action {
     implicit val timeout = Timeout(1 seconds)
     val bricklets = Await.result(

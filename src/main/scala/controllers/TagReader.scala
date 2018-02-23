@@ -1,20 +1,17 @@
 package controllers
 
-import javax.inject.Singleton
+import javax.inject.Inject
 
-import com.google.inject.Inject
 import com.tinkerforge.BrickletNFCRFID
 import models.DualRelayBricklet
 import org.apache.commons.lang3.StringUtils
-import play.api.mvc.Controller
+import play.Logger
+import play.api.mvc.{AbstractController, ControllerComponents}
 import utils.Configuration
 
-/**
-  * Created by abos on 10/09/16.
-  */
 object TagReader {
   def checkAndOpenDoor(tagId: BrickletNFCRFID#TagID) = {
-    println(s"TagID: [${convertTagId(tagId)}]")
+    Logger.debug(s"TagID: [${convertTagId(tagId)}]")
 
     convertTagId(tagId) match {
       case "04D92F9AA54880" => DualRelayBricklet.setState(Configuration.doorUID, 1)
@@ -30,5 +27,4 @@ object TagReader {
   }
 }
 
-@Singleton
-class TagReader @Inject() extends Controller
+class TagReader @Inject() (cc:ControllerComponents) extends AbstractController(cc) {}

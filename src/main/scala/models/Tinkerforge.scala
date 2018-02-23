@@ -7,6 +7,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.tinkerforge.IPConnection.EnumerateListener
 import com.tinkerforge.{BrickMaster, IPConnection}
+import play.api.Logger
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.json.Json
 import utils.Configuration
@@ -18,29 +19,18 @@ object TFConnector {
   val ipcon = new IPConnection
   ipcon.connect(Configuration.tfHost, Configuration.tfPort)
 
-  ipcon.addEnumerateListener(new EnumerateListener {
-    override def enumerate(uid: String,
-                           connectedUid: String,
-                           position: Char,
-                           hardwareVersion: Array[Short],
-                           firmwareVersion: Array[Short],
-                           deviceIdentifier: Int,
-                           enumerationType: Short): Unit = {
-      val bricklet = Bricklet(
-        uid,
-        connectedUid,
-        position.toString,
-        hardwareVersion,
-        firmwareVersion,
-        deviceIdentifier,
-        enumerationType
-      )
-      EnumerationActor.actor ! EnumerationActor.Enumerate(bricklet)
-    }
+  ipcon.addEnumerateListener((uid: String, connectedUid: String, position: Char, hardwareVersion: Array[Short], firmwareVersion: Array[Short], deviceIdentifier: Int, enumerationType: Short) => {
+    val bricklet = Bricklet(
+      uid,
+      connectedUid,
+      position.toString,
+      hardwareVersion,
+      firmwareVersion,
+      deviceIdentifier,
+      enumerationType
+    )
+    EnumerationActor.actor ! EnumerationActor.Enumerate(bricklet)
   })
-
-  // Start reading NFC Tags
-  NFCReaderActor.actor ! NFCReaderActor.ReadTagId(Configuration.nfcUID)
 }
 
 /**
@@ -48,14 +38,15 @@ object TFConnector {
   * to EnumeraterActor to get all connected bricklets.
   */
 @Singleton
-class TFConnector @Inject()(appLifecycle: ApplicationLifecycle) {
+class TFConnector @Inject()(lifecycle: ApplicationLifecycle) {
+  Logger.debug("Started TFConnector...")
   EnumerationActor.actor ! EnumerationActor.Tick
+  NFCReaderActor.actor ! NFCReaderActor.ReadTagId(Configuration.nfcUID)
 }
 
 object Bricklet {
-  implicit val employeeDataReads = Json.reads[Bricklet]
-
-  implicit val employeeDataWrites = Json.writes[Bricklet]
+  implicit val brickletReads = Json.reads[Bricklet]
+  implicit val brickletWrites = Json.writes[Bricklet]
 
   def getBrickletByIdentifier(identifier: Int): Set[Bricklet] = {
     implicit val timeout = Timeout(1 seconds)
@@ -93,11 +84,8 @@ case class Bricklet(uid: String,
   }
 }
 
-/**
-  * Created by Andreas Boss on 23.08.16.
-  */
-object MasterBrick {
 
+object MasterBrick {
   import RootActor.system.dispatcher
 
   def fetchInformation(uid: String): Future[MasterBrickActor.BrickData] = Future {

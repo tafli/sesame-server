@@ -1,24 +1,19 @@
 package controllers
 
-import javax.inject.Singleton
+import javax.inject.Inject
 
 import actors.DualRelayActor
 import akka.pattern.ask
 import akka.util.Timeout
-import com.google.inject.Inject
 import models.{Bricklet, DualRelayBricklet}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, Controller}
+import play.api.mvc.{AbstractController, ControllerComponents}
 import utils.JsonUtil
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-/**
-  * Created by Andreas Boss on 23.08.16.
-  */
-@Singleton
-class Doors @Inject() extends Controller with JsonUtil {
+class Doors @Inject() (cc:ControllerComponents) extends AbstractController(cc) with JsonUtil {
   def getDoors = Action { implicit request =>
     val doorsJson = Json.obj(
       "doors" ->

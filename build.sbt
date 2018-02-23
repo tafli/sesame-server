@@ -1,19 +1,21 @@
-name := """sesame-server"""
+lazy val root = (project in file("."))
+  .enablePlugins(PlayService)
+    .enablePlugins(RoutesCompiler)
+.enablePlugins(BuildInfoPlugin)
+  .settings(
+    scalaVersion := "2.12.4",
 
-version := "1.0-SNAPSHOT"
+    name := """SesamServer""",
+    organization := "tafli.io",
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+    libraryDependencies ++= Seq(
+      guice,
+      akkaHttpServer,
+      logback,
+      "com.tinkerforge" % "tinkerforge" % "2.1.16",
+      "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test
+    ),
 
-scalaVersion := "2.11.8"
-
-libraryDependencies ++= Seq(
-  jdbc,
-  cache,
-  ws,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
-  "com.tinkerforge" % "tinkerforge" % "2.1.9"
-)
-
-fork in run := true
-
-scalafmtConfig in ThisBuild := Some(file(".scalafmt"))
+    buildInfoKeys := BuildInfoKey.ofN(name, version, scalaVersion, sbtVersion),
+    buildInfoPackage := "utils"
+  )

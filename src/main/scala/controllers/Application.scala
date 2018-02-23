@@ -1,15 +1,12 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
 import play.api.libs.json.Json
-import play.api.mvc.{Action, Controller}
+import play.api.mvc.{AbstractController, ControllerComponents}
+import utils.BuildInfo
 
-/**
-  * Created by Andreas Boss on 23.08.16.
-  */
-@Singleton
-class Application @Inject() extends Controller {
+class Application @Inject() (cc:ControllerComponents) extends AbstractController(cc) {
   def index = Action {
     Redirect(routes.Application.apiIndex())
   }
@@ -20,7 +17,7 @@ class Application @Inject() extends Controller {
     */
   def apiIndex = Action { implicit request =>
     val json = Json.obj(
-      "version" -> "0.1",
+      "version" -> BuildInfo.version,
       "_links" -> Seq(
         Json.obj("rel" -> "self", "href" -> routes.Application.index().absoluteURL()),
         Json.obj(
