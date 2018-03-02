@@ -3,7 +3,7 @@ package actors
 import actors.MasterBrickActor.BrickUid
 import akka.actor.{Actor, Props}
 import com.tinkerforge.BrickMaster
-import models.TFConnector
+import models.Bricklet
 import play.Logger
 
 object MasterBrickActor {
@@ -20,7 +20,7 @@ class MasterBrickActor extends Actor {
   def receive: Receive = {
     case BrickUid(uid: String) => {
 
-      val master = new BrickMaster(uid, TFConnector.ipcon);
+      val master = new BrickMaster(uid, Bricklet.getIpConnectionByUid(uid));
 
       val apiVersion =
         s"${master.getAPIVersion()(0)}.${master.getAPIVersion()(1)}.${master

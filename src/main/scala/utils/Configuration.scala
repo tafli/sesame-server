@@ -1,17 +1,20 @@
 package utils
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory, ConfigObject}
 
-/**
-  * Created by Andreas Boss on 28.08.16.
-  */
+import scala.collection.JavaConverters._
+
 object Configuration {
 
-  val conf = ConfigFactory.load
+  val conf: Config = ConfigFactory.load
 
-  val tfHost = conf.getString("tinkerforge.connection.host")
-  val tfPort = conf.getInt("tinkerforge.connection.port")
+
+  val tfConnections: Seq[Connection] = for {
+    connection <- conf.getConfigList("tinkerforge.connections").asScala
+  } yield Connection(connection.getString("host"), connection.getInt("port"))
 
   val nfcUID: String = "uvw"
-  val doorUID: String = "a53"
+  val doorUID: String = "kAz"
 }
+
+case class Connection(host: String, port: Int)

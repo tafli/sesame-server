@@ -5,32 +5,45 @@ import javax.inject.{Inject, Singleton}
 import actors._
 import akka.pattern.ask
 import akka.util.Timeout
-import com.tinkerforge.IPConnection.EnumerateListener
-import com.tinkerforge.{BrickMaster, IPConnection}
+import com.tinkerforge.IPConnection
 import play.api.Logger
 import play.api.inject.ApplicationLifecycle
-import play.api.libs.json.Json
+import play.api.libs.json._
 import utils.Configuration
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 object TFConnector {
-  val ipcon = new IPConnection
-  ipcon.connect(Configuration.tfHost, Configuration.tfPort)
+  def enumerate(): Unit = ipConnections.foreach(_.enumerate())
 
-  ipcon.addEnumerateListener((uid: String, connectedUid: String, position: Char, hardwareVersion: Array[Short], firmwareVersion: Array[Short], deviceIdentifier: Int, enumerationType: Short) => {
-    val bricklet = Bricklet(
-      uid,
-      connectedUid,
-      position.toString,
-      hardwareVersion,
-      firmwareVersion,
-      deviceIdentifier,
-      enumerationType
-    )
-    EnumerationActor.actor ! EnumerationActor.Enumerate(bricklet)
-  })
+  val ipConnections: Seq[IPConnection] = Configuration.tfConnections.map {
+    tfConnection =>
+      val ipcon = new IPConnection
+      ipcon.connect(tfConnection.host, tfConnection.port)
+
+      ipcon.addEnumerateListener(
+        (uid: String,
+         connectedUid: String,
+         position: Char,
+         hardwareVersion: Array[Short],
+         firmwareVersion: Array[Short],
+         deviceIdentifier: Int,
+         enumerationType: Short) => {
+          val bricklet = Bricklet(
+            uid,
+            connectedUid,
+            position.toString,
+            hardwareVersion,
+            firmwareVersion,
+            deviceIdentifier,
+            enumerationType
+          )
+          StackActor.actor ! StackActor.Enumerate(bricklet, ipcon)
+        })
+
+      ipcon
+  }
 }
 
 /**
@@ -40,7 +53,7 @@ object TFConnector {
 @Singleton
 class TFConnector @Inject()(lifecycle: ApplicationLifecycle) {
   Logger.debug("Started TFConnector...")
-  EnumerationActor.actor ! EnumerationActor.Tick
+  StackActor.actor ! StackActor.Tick
   NFCReaderActor.actor ! NFCReaderActor.ReadTagId(Configuration.nfcUID)
 }
 
@@ -48,24 +61,32 @@ object Bricklet {
   implicit val brickletReads = Json.reads[Bricklet]
   implicit val brickletWrites = Json.writes[Bricklet]
 
-  def getBrickletByIdentifier(identifier: Int): Set[Bricklet] = {
+  def getByIdentifier(identifier: Int): Set[Bricklet] = {
     implicit val timeout = Timeout(1 seconds)
     Await
       .result(
-        (EnumerationActor.actor ? EnumerationActor.GetBricklets).mapTo[Set[Bricklet]],
+        (StackActor.actor ? StackActor.GetBricklets).mapTo[Set[Bricklet]],
         2 seconds
       )
       .filter(_.deviceIdentifier == identifier)
   }
 
-  def getBrickletByUid(uid: String): Option[Bricklet] = {
+  def getByUid(uid: String): Bricklet = {
     implicit val timeout = Timeout(1 seconds)
     Await
       .result(
-        (EnumerationActor.actor ? EnumerationActor.GetBricklets).mapTo[Set[Bricklet]],
+        (StackActor.actor ? StackActor.GetBrickletByUid(uid)).mapTo[Bricklet],
         2 seconds
       )
-      .find(_.uid == uid)
+  }
+
+  def getIpConnectionByUid(uid: String): IPConnection = {
+    implicit val timeout = Timeout(1 seconds)
+    Await
+      .result(
+        (StackActor.actor ? StackActor.GetIpConnectionByUid(uid)).mapTo[IPConnection],
+        2 seconds
+      )
   }
 }
 
@@ -84,26 +105,7 @@ case class Bricklet(uid: String,
   }
 }
 
-
-object MasterBrick {
-  import RootActor.system.dispatcher
-
-  def fetchInformation(uid: String): Future[MasterBrickActor.BrickData] = Future {
-    val master = new BrickMaster(uid, TFConnector.ipcon);
-    // Create device object
-    val apiVersion =
-      s"${master.getAPIVersion()(0)}.${master.getAPIVersion()(1)}.${master.getAPIVersion()(2)}"
-
-    MasterBrickActor
-      .BrickData(apiVersion, master.getStackVoltage, master.getChipTemperature / 10)
-  }
-}
-
 object DualRelayBricklet {
   def setState(uid: String, relay: Short) =
     DualRelayActor.actor ! DualRelayActor.SetState(uid, relay)
-}
-
-object NFCReaderBricklet {
-
 }

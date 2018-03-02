@@ -4,7 +4,7 @@ import actors.NFCReaderActor.ReadTagId
 import akka.actor.{Actor, Props}
 import com.tinkerforge.BrickletNFCRFID
 import controllers.TagReader
-import models.TFConnector
+import models.Bricklet
 import play.Logger
 
 import scala.util.{Failure, Success, Try}
@@ -22,7 +22,7 @@ class NFCReaderActor extends Actor {
     case ReadTagId(uid: String) => {
       Logger.debug("Start reading tags")
 
-      val bricklet = new BrickletNFCRFID(uid, TFConnector.ipcon)
+      val bricklet = new BrickletNFCRFID(uid, Bricklet.getIpConnectionByUid(uid))
       var currentTagType = BrickletNFCRFID.TAG_TYPE_MIFARE_CLASSIC
 
       bricklet.addStateChangedListener((state: Short, idle: Boolean) => {
