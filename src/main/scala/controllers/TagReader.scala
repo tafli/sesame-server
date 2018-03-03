@@ -13,12 +13,8 @@ object TagReader {
   def checkAndOpenDoor(tagId: BrickletNFCRFID#TagID) = {
     Logger.debug(s"TagID: [${convertTagId(tagId)}]")
 
-    convertTagId(tagId) match {
-      case "04D92F9AA54880" => DualRelayBricklet.setState(Configuration.doorUID, 1)
-      case "16A2C116" => DualRelayBricklet.setState(Configuration.doorUID, 1)
-      case "A4133C23" => DualRelayBricklet.setState(Configuration.doorUID, 1)
-      case "4867482E" => DualRelayBricklet.setState(Configuration.doorUID, 1)
-      case _ =>
+    Configuration.tagIDs.filter(_.equals(convertTagId(tagId))).foreach { tagId =>
+      DualRelayBricklet.setState(Configuration.doorUID, 1)
     }
   }
 
