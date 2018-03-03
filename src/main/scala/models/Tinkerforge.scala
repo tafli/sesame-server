@@ -11,7 +11,7 @@ import play.api.inject.ApplicationLifecycle
 import play.api.libs.json._
 import utils.Configuration
 
-import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 object TFConnector {
@@ -61,32 +61,22 @@ object Bricklet {
   implicit val brickletReads = Json.reads[Bricklet]
   implicit val brickletWrites = Json.writes[Bricklet]
 
-  def getByIdentifier(identifier: Int): Set[Bricklet] = {
-    implicit val timeout = Timeout(1 seconds)
-    Await
-      .result(
-        (StackActor.actor ? StackActor.GetBricklets).mapTo[Set[Bricklet]],
-        2 seconds
-      )
-      .filter(_.deviceIdentifier == identifier)
+  implicit val timeout = Timeout(1 seconds)
+
+  def getBricklets: Future[Set[Bricklet]] = {
+    (StackActor.actor ? StackActor.GetBricklets).mapTo[Set[Bricklet]]
   }
 
-  def getByUid(uid: String): Bricklet = {
-    implicit val timeout = Timeout(1 seconds)
-    Await
-      .result(
-        (StackActor.actor ? StackActor.GetBrickletByUid(uid)).mapTo[Bricklet],
-        2 seconds
-      )
+  def getByIdentifier(identifier: Int): Future[Set[Bricklet]] = {
+    (StackActor.actor ? StackActor.GetBrickletsByIdentifier(identifier)).mapTo[Set[Bricklet]]
   }
 
-  def getIpConnectionByUid(uid: String): IPConnection = {
-    implicit val timeout = Timeout(1 seconds)
-    Await
-      .result(
-        (StackActor.actor ? StackActor.GetIpConnectionByUid(uid)).mapTo[IPConnection],
-        2 seconds
-      )
+  def getByUid(uid: String): Future[Bricklet] = {
+    (StackActor.actor ? StackActor.GetBrickletByUid(uid)).mapTo[Bricklet]
+  }
+
+  def getIpConnectionByUid(uid: String): Future[IPConnection] = {
+    (StackActor.actor ? StackActor.GetIpConnectionByUid(uid)).mapTo[IPConnection]
   }
 }
 

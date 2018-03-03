@@ -2,36 +2,39 @@ package controllers
 
 import javax.inject.Inject
 
-import actors.DualRelayActor
-import akka.pattern.ask
-import akka.util.Timeout
 import models.{Bricklet, DualRelayBricklet}
 import play.api.libs.json.Json
 import play.api.mvc.{AbstractController, ControllerComponents}
 import utils.JsonUtil
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 class Doors @Inject()(cc: ControllerComponents) extends AbstractController(cc) with JsonUtil {
-  def getDoors = Action { implicit request =>
-    val doorsJson = Json.obj(
-      "doors" ->
-        Bricklet.getByIdentifier(26).map { bricklet =>
-          addSelfLink(Json.toJson(bricklet), routes.Doors.getDoor(bricklet.uid))
-        }
-    )
-
-    Ok(doorsJson)
+  def getDoors = Action.async { implicit request =>
+    Bricklet.getByIdentifier(26).map { bricklets: Set[Bricklet] =>
+      Ok(Json.obj(
+        "doors" ->
+          bricklets.map { bricklet =>
+            addSelfLink(Json.toJson(bricklet), routes.Doors.getDoor(bricklet.uid))
+          })
+      )
+    }.recover {
+      case e: scala.concurrent.TimeoutException =>
+        NotFound
+    }
   }
 
-  def getDoor(uid: String) = Action { implicit request =>
-    val doorsJson = Json.obj(
-      "door" ->
-        addSelfLink(Json.toJson(Bricklet.getByUid(uid)), routes.Doors.getDoor(uid))
-    )
-
-    Ok(doorsJson)
+  def getDoor(uid: String) = Action.async { implicit request =>
+    Bricklet.getByUid(uid).map { bricklet: Bricklet =>
+      Ok(Json.obj(
+        "door" ->
+          addSelfLink(Json.toJson(bricklet), routes.Doors.getDoor(uid))
+      ))
+    }.recover {
+      case e: scala.concurrent.TimeoutException =>
+        NotFound
+    }
   }
 
   def openFirst(uid: String) = Action {

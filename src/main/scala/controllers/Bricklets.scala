@@ -2,26 +2,24 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import actors.StackActor
-import akka.pattern.ask
-import akka.util.Timeout
 import models.Bricklet
 import play.api.libs.json.Json
 import play.api.mvc.{AbstractController, ControllerComponents}
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
-class Bricklets @Inject() (cc:ControllerComponents) extends AbstractController(cc) {
-  def getBricklets = Action {
-    implicit val timeout = Timeout(1 seconds)
-    val bricklets = Await.result(
-      (StackActor.actor ? StackActor.GetBricklets).mapTo[Set[Bricklet]],
-      2 seconds)
+class Bricklets @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
+  def getBricklets = Action.async {
 
-    Ok(Json.obj("bricklets" -> bricklets.map { b =>
-      Json.toJson(b)
-    }))
+    Bricklet.getBricklets.map { bricklets =>
+      Ok(
+        Json.obj(
+          "bricklets" -> bricklets.map { b =>
+            Json.toJson(b)
+          }
+        )
+      )
+    }
   }
 }

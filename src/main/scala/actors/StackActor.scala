@@ -2,8 +2,6 @@ package actors
 
 import actors.StackActor._
 import akka.actor.{Actor, Props}
-import akka.pattern.ask
-import akka.util.Timeout
 import com.tinkerforge.IPConnection
 import models.{Bricklet, TFConnector}
 import play.Logger
@@ -20,6 +18,8 @@ object StackActor {
   case class Enumerate(bricklet: Bricklet, iPConnection: IPConnection)
 
   case class GetBricklets()
+
+  case class GetBrickletsByIdentifier(identifier: Int)
 
   case class GetBrickletByUid(uid: String)
 
@@ -49,10 +49,10 @@ class StackActor extends Actor {
     }
     case GetBricklets => {
       Logger.debug("Someone is asking for all bricklets!")
-      implicit val timeout = Timeout(2 seconds)
-      self ? Tick
       sender ! brickletMap.values.map(_._1).toSet
     }
+    case GetBrickletsByIdentifier(identifier) =>
+      sender ! brickletMap.filter(_._2._1.deviceIdentifier == identifier).map(_._2._1).toSet
     case GetBrickletByUid(uid) =>
       Logger.debug(s"Retrieve UID [$uid]")
       sender ! brickletMap(uid)._1

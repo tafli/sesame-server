@@ -25,8 +25,7 @@ object TagReader {
   def convertTagId(tagId: BrickletNFCRFID#TagID): String = {
     (for {
       i <- 0 until tagId.tidLength
-    } yield StringUtils.leftPad(Integer.toHexString(tagId.tid(i)).toUpperCase, 2, "0"))
-      .mkString
+    } yield StringUtils.leftPad(Integer.toHexString(tagId.tid(i)).toUpperCase, 2, "0")).mkString
   }
 }
 
