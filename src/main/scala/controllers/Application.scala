@@ -1,13 +1,12 @@
 package controllers
 
 import javax.inject.Inject
-
 import play.api.libs.json.Json
-import play.api.mvc.{AbstractController, ControllerComponents}
+import play.api.mvc.{AbstractController, Action, AnyContent, ControllerComponents}
 import utils.BuildInfo
 
 class Application @Inject() (cc:ControllerComponents) extends AbstractController(cc) {
-  def index = Action {
+  def index: Action[AnyContent] = Action {
     Redirect(routes.Application.apiIndex())
   }
 
@@ -17,7 +16,7 @@ class Application @Inject() (cc:ControllerComponents) extends AbstractController
     */
   def apiIndex = Action { implicit request =>
     val json = Json.obj(
-      "version" -> BuildInfo.version,
+      "version" -> s"${BuildInfo.version}, Build ${BuildInfo.buildInfoBuildNumber}",
       "_links" -> Seq(
         Json.obj("rel" -> "self", "href" -> routes.Application.index().absoluteURL()),
         Json.obj(

@@ -1,29 +1,28 @@
 package actors
 
 import actors.NFCReaderActor.ReadTagId
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import com.tinkerforge.BrickletNFCRFID
 import controllers.TagReader
 import models.Bricklet
-import play.Logger
+import play.api.Logging
 
 import scala.util.{Failure, Success, Try}
 
 object NFCReaderActor {
-  val actor = RootActor.system.actorOf(Props[NFCReaderActor])
+  val actor: ActorRef = RootActor.system.actorOf(Props[NFCReaderActor])
 
   def props: Props = Props(new MasterBrickActor)
 
   case class ReadTagId(uid: String)
-
 }
 
-class NFCReaderActor extends Actor {
+class NFCReaderActor extends Actor with Logging {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def receive: Receive = {
     case ReadTagId(uid: String) => {
-      Logger.debug("Start reading tags")
+      logger.debug("Start reading tags")
 
       Bricklet.getIpConnectionByUid(uid).foreach { bricklet =>
         val nfcBricklet = new BrickletNFCRFID(uid, bricklet)
@@ -43,13 +42,13 @@ class NFCReaderActor extends Actor {
             case Success(tagId: BrickletNFCRFID#TagID) =>
               TagReader.checkAndOpenDoor(tagId)
             case Success(tag) =>
-            case Failure(e) => Logger.error(s"Failed with Exception $e")
+            case Failure(e) => logger.error(s"Failed with Exception $e")
           }
           Thread.sleep(100)
         })
         nfcBricklet.requestTagID(BrickletNFCRFID.TAG_TYPE_MIFARE_CLASSIC)
       }
     }
-    case _ => Logger.warn("Received invalid message")
+    case _ => logger.warn("Received invalid message")
   }
 }

@@ -4,7 +4,7 @@ import actors.StackActor._
 import akka.actor.{Actor, Props}
 import com.tinkerforge.IPConnection
 import models.{Bricklet, TFConnector}
-import play.Logger
+import play.api.Logging
 
 import scala.concurrent.duration._
 
@@ -27,7 +27,7 @@ object StackActor {
 
 }
 
-class StackActor extends Actor {
+class StackActor extends Actor with Logging {
 
   import context.dispatcher
 
@@ -39,25 +39,25 @@ class StackActor extends Actor {
 
   def receive: Receive = {
     case Tick => {
-      Logger.debug("Enumerate TF stack...")
+      logger.debug("Enumerate TF stack...")
       brickletMap = Map()
       TFConnector.enumerate()
     }
     case Enumerate(bricklet, iPConnection) => {
-      Logger.debug(s"Adding bricklet with UID [${bricklet.uid}]")
+      logger.debug(s"Adding bricklet with UID [${bricklet.uid}]")
       brickletMap = brickletMap + (bricklet.uid -> (bricklet, iPConnection))
     }
     case GetBricklets => {
-      Logger.debug("Someone is asking for all bricklets!")
+      logger.debug("Someone is asking for all bricklets!")
       sender ! brickletMap.values.map(_._1).toSet
     }
     case GetBrickletsByIdentifier(identifier) =>
       sender ! brickletMap.filter(_._2._1.deviceIdentifier == identifier).map(_._2._1).toSet
     case GetBrickletByUid(uid) =>
-      Logger.debug(s"Retrieve UID [$uid]")
+      logger.debug(s"Retrieve UID [$uid]")
       sender ! brickletMap(uid)._1
     case GetIpConnectionByUid(uid) => sender ! brickletMap(uid)._2
 
-    case _ => Logger.warn("Received invalid message")
+    case _ => logger.warn("Received invalid message")
   }
 }

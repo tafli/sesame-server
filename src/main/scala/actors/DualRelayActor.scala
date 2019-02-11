@@ -4,7 +4,7 @@ import actors.DualRelayActor.SetState
 import akka.actor.{Actor, Props}
 import com.tinkerforge.BrickletDualRelay
 import models.Bricklet
-import play.Logger
+import play.api.Logging
 
 object DualRelayActor {
   val actor = RootActor.system.actorOf(Props[DualRelayActor])
@@ -13,18 +13,18 @@ object DualRelayActor {
   case class SetState(uid: String, relay: Short)
 }
 
-class DualRelayActor extends Actor {
+class DualRelayActor extends Actor with Logging {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def receive: Receive = {
     case SetState(uid: String, relay: Short) => {
-      Logger.debug(s"Setting State of [$uid] to [true]")
+      logger.debug(s"Setting State of [$uid] to [true]")
 
       Bricklet.getIpConnectionByUid(uid).foreach { ipCon =>
         new BrickletDualRelay(uid, ipCon).setMonoflop(relay, true, 1000)
       }
     }
 
-    case _ => Logger.warn("Received invalid message")
+    case _ => logger.warn("Received invalid message")
   }
 }

@@ -1,12 +1,11 @@
 package models
 
-import javax.inject.{Inject, Singleton}
-
 import actors._
 import akka.pattern.ask
 import akka.util.Timeout
 import com.tinkerforge.IPConnection
-import play.api.Logger
+import javax.inject.{Inject, Singleton}
+import play.api.Logging
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.json._
 import utils.Configuration
@@ -51,10 +50,13 @@ object TFConnector {
   * to EnumeraterActor to get all connected bricklets.
   */
 @Singleton
-class TFConnector @Inject()(lifecycle: ApplicationLifecycle) {
-  Logger.debug("Started TFConnector...")
+class TFConnector @Inject()(lifecycle: ApplicationLifecycle) extends Logging {
+  logger.debug("Started TFConnector...")
   StackActor.actor ! StackActor.Tick
-  NFCReaderActor.actor ! NFCReaderActor.ReadTagId(Configuration.nfcUID)
+
+  if (Configuration.nfcEnabled) {
+    NFCReaderActor.actor ! NFCReaderActor.ReadTagId(Configuration.nfcUID)
+  }
 }
 
 object Bricklet {

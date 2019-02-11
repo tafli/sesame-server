@@ -4,7 +4,7 @@ import actors.MasterBrickActor.BrickUid
 import akka.actor.{Actor, Props}
 import com.tinkerforge.BrickMaster
 import models.Bricklet
-import play.Logger
+import play.api.Logging
 
 import scala.util.{Failure, Success}
 
@@ -17,7 +17,7 @@ object MasterBrickActor {
 
 }
 
-class MasterBrickActor extends Actor {
+class MasterBrickActor extends Actor with Logging {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -36,6 +36,6 @@ class MasterBrickActor extends Actor {
         case Failure(ex) =>
       }
     }
-    case _ => Logger.warn("Received invalid message!")
+    case _ => logger.warn("Received invalid message!")
   }
 }

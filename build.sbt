@@ -1,21 +1,21 @@
 lazy val root = (project in file("."))
-  .enablePlugins(PlayService)
-    .enablePlugins(RoutesCompiler)
-.enablePlugins(BuildInfoPlugin)
+  .enablePlugins(PlayScala)
+  .enablePlugins(BuildInfoPlugin)
+  .disablePlugins(PlayLayoutPlugin)
   .settings(
-    scalaVersion := "2.12.4",
+    scalaVersion := "2.12.8",
 
     name := """SesamServer""",
     organization := "tafli.io",
 
     libraryDependencies ++= Seq(
       guice,
-      akkaHttpServer,
-      logback,
-      "com.tinkerforge" % "tinkerforge" % "2.1.16",
-      "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test
+      "com.tinkerforge" % "tinkerforge" % "2.1.22",
+      "org.apache.commons" % "commons-lang3" % "3.8.1",
+      "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.1" % Test
     ),
 
-    buildInfoKeys := BuildInfoKey.ofN(name, version, scalaVersion, sbtVersion),
+    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion, buildInfoBuildNumber),
     buildInfoPackage := "utils"
   )
+PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value

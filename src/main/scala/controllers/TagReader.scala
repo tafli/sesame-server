@@ -1,19 +1,18 @@
 package controllers
 
-import javax.inject.Inject
-
 import com.tinkerforge.BrickletNFCRFID
+import javax.inject.Inject
 import models.DualRelayBricklet
 import org.apache.commons.lang3.StringUtils
-import play.Logger
+import play.api.Logging
 import play.api.mvc.{AbstractController, ControllerComponents}
 import utils.Configuration
 
-object TagReader {
-  def checkAndOpenDoor(tagId: BrickletNFCRFID#TagID) = {
-    Logger.debug(s"TagID: [${convertTagId(tagId)}]")
+object TagReader extends Logging{
+  def checkAndOpenDoor(tagId: BrickletNFCRFID#TagID): Unit = {
+    logger.debug(s"TagID: [${convertTagId(tagId)}]")
 
-    Configuration.tagIDs.filter(_.equals(convertTagId(tagId))).foreach { tagId =>
+    Configuration.tagIDs.filter(_.equals(convertTagId(tagId))).foreach { _ =>
       DualRelayBricklet.setState(Configuration.doorUID, 1)
     }
   }
